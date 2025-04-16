@@ -63,6 +63,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-
+    kapt("androidx.room:room-compiler:2.7.0")
 
 }
