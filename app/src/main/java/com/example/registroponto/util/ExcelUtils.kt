@@ -10,6 +10,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import RegistroPonto
+import org.apache.poi.ss.usermodel.HorizontalAlignment
 
 fun exportarParaExcel(context: Context, registros: List<RegistroPonto>) {
     try {
