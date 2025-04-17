@@ -9,12 +9,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.registroponto.ui.theme.RegistroPontoTheme
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
+import com.example.registroponto.util.exportarParaExcel
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RegistroPontoViewModel by viewModels()
@@ -88,5 +91,12 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
             it.retorno?.let { retorno -> Text("Retorno: $retorno") }
             it.saida?.let { saida -> Text("Saída: $saida") }
         }
+        Button(onClick = {
+            val registrosHoje = viewModel.registros.value // ou collectAsState().value
+            exportarParaExcel(context = LocalContext.current, registros = registrosHoje)
+        }) {
+            Text("Exportar para Excel")
+        }
+
     }
 }
