@@ -1,16 +1,20 @@
 package com.example.registroponto.util
 
+import RegistroPonto
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DateUtil
+import org.apache.poi.ss.usermodel.HorizontalAlignment
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.util.*
-import RegistroPonto
-import org.apache.poi.ss.usermodel.HorizontalAlignment
+import java.util.Date
+import java.util.Locale
 
 fun exportarParaExcel(context: Context, registros: List<RegistroPonto>) {
     try {
@@ -59,24 +63,20 @@ fun exportarParaExcel(context: Context, registros: List<RegistroPonto>) {
     }
 }
 
-fun importarRegistrosDoExcel(context: Context): List<RegistroPonto> {
+fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
     val registros = mutableListOf<RegistroPonto>()
     try {
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "registro_ponto.xlsx")
-        if (!file.exists()) return registros
-
-        val inputStream = FileInputStream(file)
+        val inputStream = context.contentResolver.openInputStream(uri)
         val workbook = XSSFWorkbook(inputStream)
         val sheet = workbook.getSheetAt(0)
 
         for (rowIndex in 1..sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex) ?: continue
-
-            val data = row.getCell(0)?.stringCellValue ?: continue
-            val entrada = row.getCell(1)?.stringCellValue
-            val pausa = row.getCell(2)?.stringCellValue
-            val retorno = row.getCell(3)?.stringCellValue
-            val saida = row.getCell(4)?.stringCellValue
+            val data = getCellStringValue(row.getCell(0)) ?: continue
+            val entrada = getCellStringValue(row.getCell(1))
+            val pausa = getCellStringValue(row.getCell(2))
+            val retorno = getCellStringValue(row.getCell(3))
+            val saida = getCellStringValue(row.getCell(4))
 
             registros.add(
                 RegistroPonto(
@@ -90,9 +90,26 @@ fun importarRegistrosDoExcel(context: Context): List<RegistroPonto> {
         }
 
         workbook.close()
-        inputStream.close()
+        inputStream?.close()
     } catch (e: Exception) {
         e.printStackTrace()
     }
     return registros
+}
+
+fun getCellStringValue(cell: Cell?): String? {
+    if (cell == null) return null
+    return when (cell.cellType) {
+        CellType.STRING -> cell.stringCellValue
+        CellType.NUMERIC -> {
+            val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            if (DateUtil.isCellDateFormatted(cell)) {
+                format.format(cell.dateCellValue)
+            } else {
+                cell.numericCellValue.toString()
+            }
+        }
+        CellType.BOOLEAN -> cell.booleanCellValue.toString()
+        else -> null
+    }
 }

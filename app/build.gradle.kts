@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.registroponto"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -64,8 +64,5 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt("androidx.room:room-compiler:2.7.0")
-    implementation("org.apache.poi:poi-ooxml:5.2.3")
-
-
-
+    implementation(libs.poi.ooxml)
 }
