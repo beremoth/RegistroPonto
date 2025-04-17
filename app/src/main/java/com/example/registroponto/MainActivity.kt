@@ -64,6 +64,7 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        Spacer(modifier = Modifier.height(150.dp))
         Button(onClick = {
             val hora = LocalTime.now().format(formatter)
             viewModel.marcarHorario(tipo = "entrada", data = hoje, hora = hora)
@@ -84,6 +85,7 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
 
         Button(onClick = {
             val hora = LocalTime.now().format(formatter)
+
             viewModel.marcarHorario(tipo = "retorno", data = hoje, hora = hora)
         }) {
             Text("Marcar Retorno")
@@ -124,4 +126,6 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
             it.saida?.let { saida -> Text("Saída: $saida") }
         }
     }
-}
+ }
+
+
