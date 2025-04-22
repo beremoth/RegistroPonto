@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -65,4 +66,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     kapt("androidx.room:room-compiler:2.7.0")
     implementation(libs.poi.ooxml)
+    implementation(libs.androidx.material.icons.extended)
+    implementation("androidx.compose.material:material")
+
+
 }

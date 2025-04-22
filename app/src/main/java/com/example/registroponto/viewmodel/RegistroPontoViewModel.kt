@@ -26,7 +26,7 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun marcarHorario(tipo: String, data: String, hora: String) {
+    fun marcarHorario(tipo: String, data: String, hora: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             val registrosDia = dao.listarTodos().find { it.data == data }
             if (registrosDia == null) {
@@ -48,8 +48,10 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
                 dao.atualizar(atualizado)
             }
             carregarRegistros()
+            onComplete?.invoke()
         }
     }
+
     fun inserirRegistro(registro: RegistroPonto) {
         viewModelScope.launch {
             dao.inserir(registro)
