@@ -2,7 +2,6 @@ package com.example.registroponto.uiu
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -33,8 +32,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import getFileFromUri
-
+import com.example.registroponto.util.getFileFromUri
+import com.example.registroponto.util.importarRegistrosDoExcel
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RegistroPontoViewModel by viewModels()
@@ -61,16 +61,10 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         uri?.let {
             val file = getFileFromUri(context, it)
             file?.let {
-                exportarParaExcel(context, it, registroPontoDoDia) // Aqui você passa o registro atual
+                importarRegistrosDoExcel(context, uri) // Aqui você passa o registro atual
             }
         }
     }
-
-
-
-
-
-
 
     Column(
         modifier = Modifier
@@ -100,7 +94,6 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
 
         Button(onClick = {
             val hora = LocalTime.now().format(formatter)
-
             viewModel.marcarHorario(tipo = "retorno", data = hoje, hora = hora)
         }) {
             Text("Marcar Retorno")
@@ -120,13 +113,14 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
                 delay(500) // pequeno atraso para garantir update
                 val registrosHoje = viewModel.registros.value.find { it.data == dataHoje }
                 registrosHoje?.let {
-                    exportarParaExcel(context, file, registroPontoDoDia)
-
+                    val file = File(context.getExternalFilesDir(null), "registro_ponto.xlsx")
+                    exportarParaExcel(context, file, it) // Passa o registro do dia
                 }
             }
         }) {
             Text("Marcar Saída")
         }
+
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -137,10 +131,5 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         ) {
             Text("Importar Excel")
         }
-
     }
- }
-
-
-
-
+}

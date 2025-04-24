@@ -20,9 +20,7 @@ import java.util.Calendar
 fun getFileFromUri(context: Context, uri: Uri): File? {
     val inputStream = context.contentResolver.openInputStream(uri) ?: return null
     val file = File(context.cacheDir, "registro_ponto_importado.xlsx")
-    FileOutputStream(file).use { output ->
-        inputStream.copyTo(output)
-    }
+    FileOutputStream(file).use { output -> inputStream.copyTo(output) }
     return file
 }
 
@@ -32,16 +30,13 @@ fun getCellStringValue(cell: Cell?): String? {
         CellType.STRING -> cell.stringCellValue
         CellType.NUMERIC -> {
             if (DateUtil.isCellDateFormatted(cell)) {
-                // Tenta distinguir entre data e hora
                 val calendar = Calendar.getInstance().apply { time = cell.dateCellValue }
                 return if (calendar.get(Calendar.HOUR_OF_DAY) == 0 &&
                     calendar.get(Calendar.MINUTE) == 0 &&
                     calendar.get(Calendar.SECOND) == 0
                 ) {
-                    // Provavelmente é uma data
                     SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(cell.dateCellValue)
                 } else {
-                    // Provavelmente é um horário
                     SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(cell.dateCellValue)
                 }
             } else {
@@ -54,7 +49,6 @@ fun getCellStringValue(cell: Cell?): String? {
     }
 }
 
-
 fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
     val registros = mutableListOf<RegistroPonto>()
 
@@ -63,8 +57,6 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
         val workbook = XSSFWorkbook(inputStream)
         val sheet = workbook.getSheetAt(0)
 
-
-        // Itera sobre as linhas da planilha, começando da segunda linha (índice 1)
         for (rowIndex in 1..sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex) ?: continue
             val data = getCellStringValue(row.getCell(0)) ?: continue
@@ -85,7 +77,6 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
             )
         }
 
-
         workbook.close()
         inputStream?.close()
     } catch (e: Exception) {
@@ -104,7 +95,6 @@ fun exportarParaExcel(context: Context, file: File, registro: RegistroPonto) {
         workbook = FileInputStream(file).use { XSSFWorkbook(it) }
         sheet = workbook.getOrCreateSheet("Registro de Ponto", headers)
 
-        // Criação de uma nova linha com o registro do ponto de hoje
         val novaLinha = sheet.createRow(sheet.physicalNumberOfRows)
         novaLinha.createCell(0).setCellValue(registro.data)
         novaLinha.createCell(1).setCellValue(registro.entrada ?: "")
@@ -112,10 +102,7 @@ fun exportarParaExcel(context: Context, file: File, registro: RegistroPonto) {
         novaLinha.createCell(3).setCellValue(registro.retorno ?: "")
         novaLinha.createCell(4).setCellValue(registro.saida ?: "")
 
-        // Salvando o arquivo de volta no mesmo lugar
-        FileOutputStream(file).use { output ->
-            workbook.write(output)
-        }
+        FileOutputStream(file).use { output -> workbook.write(output) }
 
         workbook.close()
         Toast.makeText(context, "Registro adicionado em: ${file.absolutePath}", Toast.LENGTH_LONG).show()
