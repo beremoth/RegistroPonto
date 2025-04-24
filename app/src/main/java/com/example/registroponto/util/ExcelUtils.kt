@@ -1,7 +1,6 @@
 package com.example.registroponto.util
 
 import android.content.ContentUris
-import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -17,8 +16,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 data class RegistroPonto(
@@ -106,7 +103,7 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
     return registros
 }
 
-fun exportarParaExcel(context: Context, registro: RegistroPonto) {
+fun exportarParaExcel(context: Context, registro: com.example.registroponto.data.RegistroPonto) {
     try {
         val fileName = "registro_ponto.xlsx"
         val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

@@ -105,20 +105,6 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario(tipo = "saida", data = hoje, hora = hora) {
-                val registrosAtualizados = viewModel.registros.value
-                exportarParaExcel(context, registrosAtualizados)
-                Toast.makeText(context, "Excel exportado com sucesso!", Toast.LENGTH_SHORT).show()
-            }
-        }) {
-            Text("Marcar Saída")
-        }
-
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(onClick = {
             val hora = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
             val dataHoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
@@ -138,5 +124,7 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         }
     }
  }
+
+
 
 
