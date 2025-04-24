@@ -8,22 +8,33 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.registroponto.ui.theme.RegistroPontoTheme
-import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import com.example.registroponto.util.exportarParaExcel
 import com.example.registroponto.util.importarRegistrosDoExcel
+import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RegistroPontoViewModel by viewModels()
@@ -108,21 +119,22 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            launcher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            val hora = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+            val dataHoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+
+            // Marca no banco
+            viewModel.marcarHorario(tipo = "saida", data = dataHoje, hora = hora)
+
+            // Aguarda atualização e exporta
+            scope.launch {
+                delay(500) // pequeno atraso para garantir update
+                val registrosHoje = viewModel.registros.value.find { it.data == dataHoje }
+                registrosHoje?.let {
+                    exportarParaExcel(context, it)
+                }
+            }
         }) {
-            Text("Importar Excel")
-        }
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Registros de Hoje:")
-
-        registros.filter { it.data == hoje }.forEach {
-            it.entrada?.let { entrada -> Text("Entrada: $entrada") }
-            it.pausa?.let { pausa -> Text("Pausa: $pausa") }
-            it.retorno?.let { retorno -> Text("Retorno: $retorno") }
-            it.saida?.let { saida -> Text("Saída: $saida") }
+            Text("Marcar Saída")
         }
     }
  }

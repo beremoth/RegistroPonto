@@ -67,7 +67,7 @@ dependencies {
     kapt("androidx.room:room-compiler:2.7.0")
     implementation(libs.poi.ooxml)
     implementation(libs.androidx.material.icons.extended)
-    implementation("androidx.compose.material:material")
+    implementation(libs.androidx.material)
 
 
 }

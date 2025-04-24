@@ -52,7 +52,7 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun inserirRegistro(registro: RegistroPonto) {
+    fun inserirRegistro(registro: com.example.registroponto.util.RegistroPonto) {
         viewModelScope.launch {
             dao.inserir(registro)
             carregarRegistros()
