@@ -36,6 +36,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 
+
 class MainActivity : ComponentActivity() {
     private val viewModel: RegistroPontoViewModel by viewModels()
 
@@ -121,6 +122,14 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
             }
         }) {
             Text("Marcar Saída")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = {
+            launcher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+        }) {
+            Text("Importar Excel")
         }
     }
  }

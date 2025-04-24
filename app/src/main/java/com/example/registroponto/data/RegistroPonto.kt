@@ -10,3 +10,4 @@ data class RegistroPonto(
     val retorno: String?,
     val saida: String?
 )
+

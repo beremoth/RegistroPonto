@@ -1,14 +1,14 @@
 package com.example.registroponto.viewmodel
 
-import RegistroPonto
-import RegistroPontoDao
 import AppDatabase
+import RegistroPonto
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
 
 class RegistroPontoViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getDatabase(application).registroPontoDao()
@@ -52,7 +52,7 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun inserirRegistro(registro: com.example.registroponto.util.RegistroPonto) {
+    fun inserirRegistro(registro: RegistroPonto) {
         viewModelScope.launch {
             dao.inserir(registro)
             carregarRegistros()

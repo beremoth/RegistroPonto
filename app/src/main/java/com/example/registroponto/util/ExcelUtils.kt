@@ -17,14 +17,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
-
-data class RegistroPonto(
-    val data: String,
-    val entrada: String? = null,
-    val pausa: String? = null,
-    val retorno: String? = null,
-    val saida: String? = null
-)
+import RegistroPonto
 
 fun getCellStringValue(cell: Cell?): String? {
     if (cell == null) return null
