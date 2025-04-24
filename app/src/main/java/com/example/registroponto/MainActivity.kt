@@ -17,7 +17,6 @@ import com.example.registroponto.uiu.BottomNavItem
 import com.example.registroponto.uiu.RegistroPontoScreen
 import com.example.registroponto.uiu.ResumoScreen
 
-
 class MainActivity : ComponentActivity() {
     private val viewModel: RegistroPontoViewModel by viewModels()
 

@@ -1,11 +1,7 @@
 package com.example.registroponto.util
 
-import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.widget.Toast
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
@@ -18,41 +14,44 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import RegistroPonto
+import java.util.Calendar
+
+
+fun getFileFromUri(context: Context, uri: Uri): File? {
+    val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+    val file = File(context.cacheDir, "registro_ponto_importado.xlsx")
+    FileOutputStream(file).use { output ->
+        inputStream.copyTo(output)
+    }
+    return file
+}
 
 fun getCellStringValue(cell: Cell?): String? {
     if (cell == null) return null
     return when (cell.cellType) {
         CellType.STRING -> cell.stringCellValue
         CellType.NUMERIC -> {
-            val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
             if (DateUtil.isCellDateFormatted(cell)) {
-                format.format(cell.dateCellValue)
+                // Tenta distinguir entre data e hora
+                val calendar = Calendar.getInstance().apply { time = cell.dateCellValue }
+                return if (calendar.get(Calendar.HOUR_OF_DAY) == 0 &&
+                    calendar.get(Calendar.MINUTE) == 0 &&
+                    calendar.get(Calendar.SECOND) == 0
+                ) {
+                    // Provavelmente é uma data
+                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(cell.dateCellValue)
+                } else {
+                    // Provavelmente é um horário
+                    SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(cell.dateCellValue)
+                }
             } else {
                 cell.numericCellValue.toString()
             }
         }
         CellType.BOOLEAN -> cell.booleanCellValue.toString()
+        CellType.FORMULA -> cell.toString()
         else -> null
     }
-}
-
-fun buscarArquivoNoMediaStore(context: Context, nomeArquivo: String): Uri? {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val resolver = context.contentResolver
-        val uriExterno = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-
-        val projection = arrayOf(MediaStore.Downloads._ID, MediaStore.Downloads.DISPLAY_NAME)
-        val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ?"
-        val selectionArgs = arrayOf(nomeArquivo)
-
-        resolver.query(uriExterno, projection, selection, selectionArgs, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID))
-                return ContentUris.withAppendedId(uriExterno, id)
-            }
-        }
-    }
-    return null
 }
 
 
@@ -64,11 +63,10 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
         val workbook = XSSFWorkbook(inputStream)
         val sheet = workbook.getSheetAt(0)
 
+
         // Itera sobre as linhas da planilha, começando da segunda linha (índice 1)
         for (rowIndex in 1..sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex) ?: continue
-            // Verifica se a primeira célula está vazia
-            if (row.getCell(0)?.stringCellValue.isNullOrEmpty()) continue
             val data = getCellStringValue(row.getCell(0)) ?: continue
 
             val entrada = getCellStringValue(row.getCell(1))
@@ -87,6 +85,7 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
             )
         }
 
+
         workbook.close()
         inputStream?.close()
     } catch (e: Exception) {
@@ -96,35 +95,16 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
     return registros
 }
 
-fun exportarParaExcel(context: Context, registro: RegistroPonto) {
+fun exportarParaExcel(context: Context, file: File, registro: RegistroPonto) {
     try {
-        val fileName = "registro_ponto.xlsx"
-        val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         val headers = listOf("Data", "Entrada", "Pausa", "Retorno", "Saída")
-
         val workbook: XSSFWorkbook
         val sheet: Sheet
 
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val file = File(downloadsDir, fileName)
+        workbook = FileInputStream(file).use { XSSFWorkbook(it) }
+        sheet = workbook.getOrCreateSheet("Registro de Ponto", headers)
 
-        workbook = if (file.exists()) {
-            FileInputStream(file).use { XSSFWorkbook(it) }
-        } else {
-            XSSFWorkbook()
-        }
-
-        sheet = if (workbook.numberOfSheets > 0) {
-            workbook.getSheetAt(0)
-        } else {
-            workbook.createSheet("Registro de Ponto")
-        }
-
-        if (sheet.physicalNumberOfRows == 0) {
-            val header = sheet.createRow(0)
-            headers.forEachIndexed { i, titulo -> header.createCell(i).setCellValue(titulo) }
-        }
-
+        // Criação de uma nova linha com o registro do ponto de hoje
         val novaLinha = sheet.createRow(sheet.physicalNumberOfRows)
         novaLinha.createCell(0).setCellValue(registro.data)
         novaLinha.createCell(1).setCellValue(registro.entrada ?: "")
@@ -132,10 +112,7 @@ fun exportarParaExcel(context: Context, registro: RegistroPonto) {
         novaLinha.createCell(3).setCellValue(registro.retorno ?: "")
         novaLinha.createCell(4).setCellValue(registro.saida ?: "")
 
-        for (i in headers.indices) {
-            sheet.setColumnWidth(i, 20 * 256)
-        }
-
+        // Salvando o arquivo de volta no mesmo lugar
         FileOutputStream(file).use { output ->
             workbook.write(output)
         }
@@ -149,3 +126,14 @@ fun exportarParaExcel(context: Context, registro: RegistroPonto) {
     }
 }
 
+fun XSSFWorkbook.getOrCreateSheet(sheetName: String, headers: List<String>): Sheet {
+    var sheet = getSheet(sheetName)
+    if (sheet == null) {
+        sheet = createSheet(sheetName)
+        val headerRow = sheet.createRow(0)
+        headers.forEachIndexed { index, header ->
+            headerRow.createCell(index).setCellValue(header)
+        }
+    }
+    return sheet
+}

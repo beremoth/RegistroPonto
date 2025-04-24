@@ -1,6 +1,8 @@
 package com.example.registroponto.uiu
 
+import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -18,8 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,14 +27,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.registroponto.ui.theme.RegistroPontoTheme
 import com.example.registroponto.util.exportarParaExcel
-import com.example.registroponto.util.importarRegistrosDoExcel
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-
+import getFileFromUri
 
 
 class MainActivity : ComponentActivity() {
@@ -55,17 +54,21 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
     val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-    val registros by viewModel.registros.collectAsState()
     val hoje = LocalDate.now().toString()
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { selectedUri: Uri? ->
-        selectedUri?.let { uri ->
-            val registrosImportados = importarRegistrosDoExcel(context, uri)
-            registrosImportados.forEach { registro -> viewModel.inserirRegistro(registro) }
-            Toast.makeText(context, "${registrosImportados.size} registros importados!", Toast.LENGTH_SHORT).show()
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            val file = getFileFromUri(context, it)
+            file?.let {
+                exportarParaExcel(context, it, registroPontoDoDia) // Aqui você passa o registro atual
+            }
         }
     }
+
+
+
+
 
 
 
@@ -117,7 +120,8 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
                 delay(500) // pequeno atraso para garantir update
                 val registrosHoje = viewModel.registros.value.find { it.data == dataHoje }
                 registrosHoje?.let {
-                    exportarParaExcel(context, it)
+                    exportarParaExcel(context, file, registroPontoDoDia)
+
                 }
             }
         }) {
@@ -126,11 +130,14 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(onClick = {
-            launcher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-        }) {
+        Button(
+            onClick = {
+                launcher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            },
+        ) {
             Text("Importar Excel")
         }
+
     }
  }
 
