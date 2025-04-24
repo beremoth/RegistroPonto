@@ -103,7 +103,7 @@ fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
     return registros
 }
 
-fun exportarParaExcel(context: Context, registro: com.example.registroponto.data.RegistroPonto) {
+fun exportarParaExcel(context: Context, registro: RegistroPonto) {
     try {
         val fileName = "registro_ponto.xlsx"
         val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
