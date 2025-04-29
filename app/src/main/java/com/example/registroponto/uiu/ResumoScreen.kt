@@ -16,7 +16,7 @@ import java.util.*
 fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modifier = Modifier) {
     val registros by viewModel.registros.collectAsState()
     val meses = java.time.Month.values().map {
-        it.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("pt", "BR"))
+        it.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
     }
 
     var tipoResumo by remember { mutableStateOf("Semanal") }

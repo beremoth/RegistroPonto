@@ -1,6 +1,5 @@
 package com.example.registroponto.uiu
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -16,10 +15,11 @@ fun NavigationGraph(navController: NavHostController,viewModel: RegistroPontoVie
         modifier = modifier
     ) {
         composable(BottomNavItem.Registro.route) {
-            RegistroPontoScreen(viewModel = viewModel)
+            RegistroPontoScreen(viewModel = viewModel, modifier = modifier)
+
         }
         composable(BottomNavItem.Resumo.route) {
-            ResumoScreen(viewModel = viewModel)
+            ResumoScreen(viewModel = viewModel, modifier = modifier)
         }
     }
 }
