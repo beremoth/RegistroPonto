@@ -13,21 +13,20 @@ import java.time.format.TextStyle
 import java.util.*
 
 @Composable
-fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel()) {
+fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modifier = Modifier) {
     val registros by viewModel.registros.collectAsState()
     val meses = java.time.Month.values().map {
-        it.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
+        it.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("pt", "BR"))
     }
 
     var tipoResumo by remember { mutableStateOf("Semanal") }
     var mesSelecionado by remember { mutableStateOf(LocalDate.now().monthValue - 1) }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(16.dp)) {  // Usando o modifier recebido
         Text("Resumo de Registros", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Seletor de tipo
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Tipo: ")
             Spacer(modifier = Modifier.width(8.dp))
@@ -40,25 +39,22 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Seletor de mês
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Mês: ")
             Spacer(modifier = Modifier.width(8.dp))
             DropdownMenuSelector(
                 options = meses,
                 selectedOption = meses[mesSelecionado],
-                onOptionSelected = {
-                    mesSelecionado = meses.indexOf(it)
-                }
+                onOptionSelected = { mesSelecionado = meses.indexOf(it) }
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Aqui entra a lógica de exibir o resumo
         Text("Registros filtrados virão aqui...")
     }
 }
+
 
 @Composable
 fun DropdownMenuSelector(

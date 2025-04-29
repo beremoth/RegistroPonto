@@ -11,9 +11,9 @@ import com.example.registroponto.uiu.NavigationGraph
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
 
 @Composable
-fun RegistroPontoApp() {
+fun RegistroPontoApp(viewModel: RegistroPontoViewModel = viewModel()) {
     val navController = rememberNavController()
-    val viewModel: RegistroPontoViewModel = viewModel()
+
 
     Scaffold(
         bottomBar = {

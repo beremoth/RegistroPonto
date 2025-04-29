@@ -24,7 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
+fun RegistroPontoScreen(viewModel: RegistroPontoViewModel, modifier: Modifier = Modifier) {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     val hoje = LocalDate.now().toString()
     val registros by viewModel.registros.collectAsState()
@@ -40,7 +40,7 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -48,10 +48,9 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
     ) {
         Spacer(modifier = Modifier.height(150.dp))
 
-        // Botões de marcar horário
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario(tipo = "entrada", data = hoje, hora = hora)
+            val hora = java.time.LocalTime.now().format(formatter)
+            viewModel.marcarHorario("entrada", hoje, hora)
         }) {
             Text("Marcar Entrada")
         }
@@ -59,8 +58,8 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario(tipo = "pausa", data = hoje, hora = hora)
+            val hora = java.time.LocalTime.now().format(formatter)
+            viewModel.marcarHorario("pausa", hoje, hora)
         }) {
             Text("Marcar Pausa")
         }
@@ -68,8 +67,8 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario(tipo = "retorno", data = hoje, hora = hora)
+            val hora = java.time.LocalTime.now().format(formatter)
+            viewModel.marcarHorario("retorno", hoje, hora)
         }) {
             Text("Marcar Retorno")
         }
@@ -77,13 +76,13 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario(tipo = "saida", data = hoje, hora = hora)
+            val hora = java.time.LocalTime.now().format(formatter)
+            viewModel.marcarHorario("saida", hoje, hora)
             scope.launch {
                 delay(500)
                 val registrosHoje = viewModel.registros.value.find { it.data == hoje }
                 registrosHoje?.let {
-                    val file = File(context.getExternalFilesDir(null), "registro_ponto.xlsx")
+                    val file = java.io.File(context.getExternalFilesDir(null), "registro_ponto.xlsx")
                     exportarParaExcel(context, file, it)
                 }
             }
@@ -99,7 +98,6 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
             Text("Importar Excel")
         }
 
-        // Exibir registros do dia
         registros.filter { it.data == hoje }.forEach {
             it.entrada?.let { entrada -> Text("Entrada: $entrada") }
             it.pausa?.let { pausa -> Text("Pausa: $pausa") }
@@ -108,3 +106,4 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel) {
         }
     }
 }
+
