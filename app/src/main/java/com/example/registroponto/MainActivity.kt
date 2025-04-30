@@ -3,10 +3,10 @@ package com.example.registroponto
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.registroponto.ui.theme.RegistroPontoTheme
-import com.example.registroponto.ui.RegistroPontoApp
-import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import androidx.activity.viewModels
+import com.example.registroponto.uiu.RegistroPontoApp
+import com.example.registroponto.ui.theme.RegistroPontoTheme
+import com.example.registroponto.viewmodel.RegistroPontoViewModel
 
 
 class MainActivity : ComponentActivity() {
