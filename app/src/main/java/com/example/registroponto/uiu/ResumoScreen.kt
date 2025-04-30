@@ -1,6 +1,11 @@
 package com.example.registroponto.uiu
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -8,21 +13,56 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
+
 
 @Composable
 fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modifier = Modifier) {
     val registros by viewModel.registros.collectAsState()
-    val meses = java.time.Month.values().map {
+    val meses = java.time.Month.entries.map {
         it.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
     }
 
-    var tipoResumo by remember { mutableStateOf("Semanal") }
-    var mesSelecionado by remember { mutableStateOf(LocalDate.now().monthValue - 1) }
+    var tipoResumo by remember { mutableStateOf("Mensal") }
+    var mesSelecionado by remember { mutableIntStateOf(LocalDate.now().monthValue - 1) }
 
-    Column(modifier = modifier.padding(16.dp)) {  // Usando o modifier recebido
+    val formatterData = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val formatterHora = DateTimeFormatter.ofPattern("HH:mm")
+
+    val registrosFiltrados = registros.filterNotNull().filter {
+        try {
+            val data = LocalDate.parse(it.data, formatterData)
+            if (tipoResumo == "Semanal") {
+                data.isAfter(LocalDate.now().minusWeeks(1))
+            } else {
+                data.monthValue == mesSelecionado + 1
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    val totalHoras = registrosFiltrados.mapNotNull { registro ->
+        try {
+            val entrada = registro.entrada?.let { LocalTime.parse(it, formatterHora) }
+            val saida = registro.saida?.let { LocalTime.parse(it, formatterHora) }
+            if (entrada != null && saida != null) {
+                Duration.between(entrada, saida)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }.fold(Duration.ZERO) { acc, dur -> acc.plus(dur) }
+
+    val horasTotais = totalHoras.toHours()
+    val minutosTotais = totalHoras.toMinutes() % 60
+
+    Column(modifier = modifier.padding(16.dp)) {
         Text("Resumo de Registros", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -51,7 +91,33 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Registros filtrados virão aqui...")
+        Text("Total trabalhado: ${horasTotais}h ${minutosTotais}min", style = MaterialTheme.typography.bodyLarge)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (registrosFiltrados.isEmpty()) {
+            Text("Nenhum registro encontrado para o período selecionado.")
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(registrosFiltrados) { registro ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Text("Data: ${registro.data}", style = MaterialTheme.typography.titleSmall)
+                            registro.entrada?.let { Text("Entrada: $it") }
+                            registro.pausa?.let { Text("Pausa: $it") }
+                            registro.retorno?.let { Text("Retorno: $it") }
+                            registro.saida?.let { Text("Saída: $it") }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -65,9 +131,17 @@ fun DropdownMenuSelector(
     var expanded by remember { mutableStateOf(false) }
 
     Box {
-        Button(onClick = { expanded = true }) {
-            Text(selectedOption)
+        OutlinedButton(onClick = { expanded = true }) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(selectedOption)
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
         }
+
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
