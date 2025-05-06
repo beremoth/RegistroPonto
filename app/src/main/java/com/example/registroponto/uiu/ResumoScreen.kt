@@ -51,7 +51,7 @@ fun ResumoScreen(
             val data = LocalDate.parse(it.data, formatterData)
             if (tipoResumo == "Semanal") {
                 // inclui registros de hoje e até 7 dias atrás
-                !data.isBefore(inicioSemana) && !data.isAfter(hoje)
+                data.isAfter(LocalDate.now().minusDays(7)) || data == LocalDate.now().minusDays(7)
             } else {
                 data.monthValue == mesSelecionado + 1
             }

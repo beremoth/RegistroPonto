@@ -2,10 +2,14 @@ package com.example.registroponto.viewmodel
 
 import RegistroPonto
 import RegistroPontoDao
-import android.app.Application
-import dagger.hilt.android.lifecycle.HiltViewModel
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.registroponto.util.importarRegistrosDoExcel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -59,6 +63,21 @@ class RegistroPontoViewModel @Inject constructor(
         viewModelScope.launch {
             dao.inserir(registro)
             carregarRegistros()
+        }
+    }
+    fun importarDoExcel(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            try {
+                importarRegistrosDoExcel(context, uri) { registro ->
+                    dao.inserir(registro) // aqui estamos passando uma lambda suspensa compatível
+                }
+                carregarRegistros()
+                Toast.makeText(context, "Importação concluída com sucesso!", Toast.LENGTH_SHORT)
+                    .show()
+            } catch (e: Exception) {
+                Log.e("RegistroPontoViewModel", "Erro ao importar Excel", e)
+                Toast.makeText(context, "Erro ao importar: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

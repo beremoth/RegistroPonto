@@ -38,17 +38,15 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), mod
     val scope = rememberCoroutineScope()
 
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let {
-            scope.launch {
-                importarRegistrosDoExcel(
-                    context = context,
-                    uri = it,
-                    inserirRegistro = { registro -> viewModel.inserirRegistro(registro) }
-                )
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                viewModel.importarDoExcel(it, context)
             }
         }
-    }
+    )
+
 
 
     Column(
