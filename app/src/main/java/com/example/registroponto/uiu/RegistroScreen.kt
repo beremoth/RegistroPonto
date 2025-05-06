@@ -34,14 +34,13 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), mod
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     val hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     val registros by viewModel.registros.collectAsState()
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
-            coroutineScope.launch {
+            scope.launch {
                 importarRegistrosDoExcel(
                     context = context,
                     uri = it,

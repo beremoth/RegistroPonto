@@ -1,7 +1,6 @@
 package com.example.registroponto.util
 
 import RegistroPonto
-import RegistroPontoDao
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast

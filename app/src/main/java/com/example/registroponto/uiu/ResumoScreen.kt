@@ -21,86 +21,114 @@ import java.time.format.TextStyle
 import java.time.Month
 import java.util.*
 
-
-
-
 @Composable
-fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modifier = Modifier) {
+fun ResumoScreen(
+    viewModel: RegistroPontoViewModel = viewModel(),
+    modifier: Modifier = Modifier
+) {
     val registros by viewModel.registros.collectAsState()
-    val meses = Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) }
 
+    // Meses em português
+    val meses = Month.entries.map {
+        it.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
+    }
+
+    // Estado do tipo de resumo e mês selecionado
     var tipoResumo by remember { mutableStateOf("Mensal") }
-    var mesSelecionado by remember { mutableIntStateOf(LocalDate.now().monthValue - 1) }
+    var mesSelecionado by remember { mutableStateOf(LocalDate.now().monthValue - 1) }
 
+    // Formatadores
     val formatterData = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val formatterHora = DateTimeFormatter.ofPattern("HH:mm")
 
-    val registrosFiltrados = registros.filterNotNull().filter {
+    // Limites de filtro
+    val hoje = LocalDate.now()
+    val inicioSemana = hoje.minusDays(7)
+
+    // Filtra registros conforme tipoResumo
+    val registrosFiltrados = registros.filter {
         try {
             val data = LocalDate.parse(it.data, formatterData)
             if (tipoResumo == "Semanal") {
-                data.isAfter(LocalDate.now().minusDays(7))
+                // inclui registros de hoje e até 7 dias atrás
+                !data.isBefore(inicioSemana) && !data.isAfter(hoje)
             } else {
                 data.monthValue == mesSelecionado + 1
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
 
+    // Soma total de horas
     val totalHoras = registrosFiltrados.mapNotNull {
         try {
-            val entrada = it.entrada?.let { LocalTime.parse(it, formatterHora) }
-            val saida = it.saida?.let { LocalTime.parse(it, formatterHora) }
+            val entrada = it.entrada?.let { t -> LocalTime.parse(t, formatterHora) }
+            val saida   = it.saida?.let   { t -> LocalTime.parse(t, formatterHora) }
             if (entrada != null && saida != null) Duration.between(entrada, saida) else null
         } catch (_: Exception) { null }
     }.fold(Duration.ZERO) { acc, dur -> acc.plus(dur) }
 
-    val horasTotais = totalHoras.toHours()
+    val horasTotais   = totalHoras.toHours()
     val minutosTotais = totalHoras.toMinutes() % 60
 
     Column(modifier = modifier.padding(16.dp)) {
         Text("Resumo de Registros", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
+        // Seletor Semanal/Mensal
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Tipo: ")
-            Spacer(modifier = Modifier.width(8.dp))
-            DropdownMenuSelector(listOf("Semanal", "Mensal"), tipoResumo) { tipoResumo = it }
+            Spacer(Modifier.width(8.dp))
+            DropdownMenuSelector(
+                options = listOf("Semanal", "Mensal"),
+                selectedOption = tipoResumo,
+                onOptionSelected = { tipoResumo = it }
+            )
         }
 
+        // Se for Mensal, mostra seletor de mês
         if (tipoResumo == "Mensal") {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Mês: ")
-                Spacer(modifier = Modifier.width(8.dp))
-                DropdownMenuSelector(meses, meses[mesSelecionado]) {
-                    mesSelecionado = meses.indexOf(it)
+                Spacer(Modifier.width(8.dp))
+                DropdownMenuSelector(
+                    options = meses,
+                    selectedOption = meses[mesSelecionado]
+                ) { selecionado ->
+                    mesSelecionado = meses.indexOf(selecionado)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("Total trabalhado: ${horasTotais}h ${minutosTotais}min", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
+        Text(
+            "Total trabalhado: ${horasTotais}h ${minutosTotais}min",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(Modifier.height(16.dp))
 
+        // Lista de registros
         if (registrosFiltrados.isEmpty()) {
             Text("Nenhum registro encontrado para o período selecionado.")
         } else {
-            LazyColumn(modifier = Modifier.fillMaxHeight()) {
+            LazyColumn {
                 items(registrosFiltrados) { registro ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     ) {
                         Column(Modifier.padding(8.dp)) {
                             Text("Data: ${registro.data}", style = MaterialTheme.typography.titleSmall)
                             registro.entrada?.let { Text("Entrada: $it") }
-                            registro.pausa?.let { Text("Pausa: $it") }
+                            registro.pausa?.let   { Text("Pausa: $it") }
                             registro.retorno?.let { Text("Retorno: $it") }
-                            registro.saida?.let { Text("Saída: $it") }
+                            registro.saida?.let   { Text("Saída: $it") }
                         }
                     }
                 }
@@ -108,8 +136,6 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
         }
     }
 }
-
-
 
 @Composable
 fun DropdownMenuSelector(

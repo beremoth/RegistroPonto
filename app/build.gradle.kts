@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hilt)
     id("kotlin-kapt")
 
+
 }
 
 
@@ -46,9 +47,9 @@ android {
 dependencies {
 
 
-    implementation ("com.google.dagger:hilt-android:2.50")
+    implementation (libs.hilt.android.v250)
     implementation(libs.androidx.media3.common.ktx)
-    kapt ("com.google.dagger:hilt-android-compiler:2.50")
+    kapt (libs.hilt.android.compiler)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
