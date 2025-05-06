@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.registroponto.util.exportarParaExcel
 import com.example.registroponto.util.importarRegistrosDoExcel
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
@@ -27,8 +28,6 @@ import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import RegistroPonto
-import RegistroPontoDao
 
 @Composable
 fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), modifier: Modifier = Modifier) {
@@ -43,10 +42,15 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), mod
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             coroutineScope.launch {
-                importarRegistrosDoExcel(context, it, registroPontoDao)
+                importarRegistrosDoExcel(
+                    context = context,
+                    uri = it,
+                    inserirRegistro = { registro -> viewModel.inserirRegistro(registro) }
+                )
             }
         }
     }
+
 
     Column(
         modifier = modifier
@@ -72,8 +76,7 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), mod
             marcar("saida")
             scope.launch {
                 delay(300)
-                val registrosDoDia =
-                    registros.filter { it.data == hoje && it.entrada != null && it.saida != null }
+                val registrosDoDia = registros.filter { it.data == hoje && it.entrada != null && it.saida != null }
 
                 if (registrosDoDia.isNotEmpty()) {
                     val file = File(context.getExternalFilesDir(null), "registro_ponto.xlsx")

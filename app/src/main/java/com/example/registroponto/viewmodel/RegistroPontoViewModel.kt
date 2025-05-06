@@ -3,7 +3,6 @@ package com.example.registroponto.viewmodel
 import RegistroPonto
 import RegistroPontoDao
 import android.app.Application
-
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.text.Typography.dagger
-
-@HiltAndroidApp
-class MyApp : Application()
 
 @HiltViewModel
 class RegistroPontoViewModel @Inject constructor(
@@ -36,7 +31,7 @@ class RegistroPontoViewModel @Inject constructor(
 
     fun marcarHorario(tipo: String, data: String, hora: String, onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
-            val registrosDia = dao.listarTodos().find { it.data == data }
+            val registrosDia = dao.buscarPorData(data)
             if (registrosDia == null) {
                 val novo = RegistroPonto(
                     data = data,

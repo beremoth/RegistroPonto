@@ -2,9 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
     id("kotlin-kapt")
-    id("com.google.devtools.ksp") version ("1.9.22-1.0.18")
-    id("dagger.hilt.android.plugin")
+
 }
 
 
@@ -45,6 +45,10 @@ android {
 
 dependencies {
 
+
+    implementation ("com.google.dagger:hilt-android:2.50")
+    implementation(libs.androidx.media3.common.ktx)
+    kapt ("com.google.dagger:hilt-android-compiler:2.50")
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

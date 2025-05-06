@@ -65,7 +65,11 @@ fun exportarParaExcel(context: Context, file: File, registros: List<RegistroPont
 
 
 
-suspend fun importarRegistrosDoExcel(context: Context, uri: Uri, dao: RegistroPontoDao) {
+suspend fun importarRegistrosDoExcel(
+    context: Context,
+    uri: Uri,
+    inserirRegistro: suspend (RegistroPonto) -> Unit
+) {
     withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openInputStream(uri)?.use { input ->
@@ -89,7 +93,7 @@ suspend fun importarRegistrosDoExcel(context: Context, uri: Uri, dao: RegistroPo
                             saida = saida
                         )
 
-                        dao.inserir(registro)
+                        inserirRegistro(registro)  // Chama via ViewModel
                     }
                 }
 
@@ -106,4 +110,5 @@ suspend fun importarRegistrosDoExcel(context: Context, uri: Uri, dao: RegistroPo
         }
     }
 }
+
 
