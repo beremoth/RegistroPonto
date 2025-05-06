@@ -3,8 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
-    id("com.google.devtools.ksp") version "1.9.22-1.0.18"
+    id("com.google.devtools.ksp") version ("1.9.22-1.0.18")
+    id("dagger.hilt.android.plugin")
 }
+
 
 android {
     namespace = "com.example.registroponto"
@@ -43,7 +45,9 @@ android {
 
 dependencies {
 
-
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -65,7 +69,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt("androidx.room:room-compiler:2.7.0")
+    kapt("androidx.room:room-compiler:2.7.1")
     implementation(libs.poi.ooxml)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material)

@@ -1,17 +1,25 @@
 package com.example.registroponto.viewmodel
 
-import AppDatabase
 import RegistroPonto
+import RegistroPontoDao
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+
+import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import kotlin.text.Typography.dagger
 
+@HiltAndroidApp
+class MyApp : Application()
 
-class RegistroPontoViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = AppDatabase.getDatabase(application).registroPontoDao()
+@HiltViewModel
+class RegistroPontoViewModel @Inject constructor(
+    private val dao: RegistroPontoDao
+) : ViewModel() {
 
     private val _registros = MutableStateFlow<List<RegistroPonto>>(emptyList())
     val registros: StateFlow<List<RegistroPonto>> = _registros
@@ -58,5 +66,4 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
             carregarRegistros()
         }
     }
-
 }

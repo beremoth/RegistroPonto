@@ -1,47 +1,49 @@
 package com.example.registroponto.uiu
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.registroponto.util.exportarParaExcel
-import com.example.registroponto.util.getFileFromUri
 import com.example.registroponto.util.importarRegistrosDoExcel
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import RegistroPonto
+import RegistroPontoDao
 
 @Composable
-fun RegistroPontoScreen(viewModel: RegistroPontoViewModel, modifier: Modifier = Modifier) {
+fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), modifier: Modifier = Modifier) {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     val hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     val registros by viewModel.registros.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    var uriParaExportar by remember { mutableStateOf<Uri?>(null) }
 
-    val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    ) { uri ->
-        uriParaExportar = uri
-    }
-
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
-            val file = getFileFromUri(context, it)
-            file?.let {
-                importarRegistrosDoExcel(context, uri)
+            coroutineScope.launch {
+                importarRegistrosDoExcel(context, it, registroPontoDao)
             }
         }
     }
@@ -55,61 +57,37 @@ fun RegistroPontoScreen(viewModel: RegistroPontoViewModel, modifier: Modifier = 
     ) {
         Spacer(modifier = Modifier.height(150.dp))
 
-        Button(onClick = {
+        val marcar = { tipo: String ->
             val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario("entrada", hoje, hora)
-        }) { Text("Marcar Entrada") }
+            viewModel.marcarHorario(tipo, hoje, hora)
+        }
 
+        Button(onClick = { marcar("entrada") }) { Text("Marcar Entrada") }
         Spacer(modifier = Modifier.height(8.dp))
-
-        Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario("pausa", hoje, hora)
-        }) { Text("Marcar Pausa") }
-
+        Button(onClick = { marcar("pausa") }) { Text("Marcar Pausa") }
         Spacer(modifier = Modifier.height(8.dp))
-
-        Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario("retorno", hoje, hora)
-        }) { Text("Marcar Retorno") }
-
+        Button(onClick = { marcar("retorno") }) { Text("Marcar Retorno") }
         Spacer(modifier = Modifier.height(8.dp))
-
         Button(onClick = {
-            val hora = LocalTime.now().format(formatter)
-            viewModel.marcarHorario("saida", hoje, hora)
-
+            marcar("saida")
             scope.launch {
-                delay(500) // pequeno delay para garantir update no banco
-                val registroHoje = viewModel.registros.value.find { it.data == hoje }
-                if (registroHoje != null) {
-                    // Inicia criação do arquivo para exportar
-                    exportLauncher.launch("registro_ponto_${hoje.replace("/", "_")}.xlsx")
+                delay(300)
+                val registrosDoDia =
+                    registros.filter { it.data == hoje && it.entrada != null && it.saida != null }
+
+                if (registrosDoDia.isNotEmpty()) {
+                    val file = File(context.getExternalFilesDir(null), "registro_ponto.xlsx")
+                    exportarParaExcel(context, file, registrosDoDia)
                 }
             }
-        }) {
-            Text("Marcar Saída e Exportar")
-        }
+        }) { Text("Marcar Saída") }
 
         Spacer(modifier = Modifier.height(8.dp))
-
         Button(onClick = {
-            importLauncher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            launcher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
         }) {
-            Text("Importar Excel")
-        }
+            Text("Importar Excel")}
 
-        // Quando o uri de exportação for definido, realiza exportação
-        uriParaExportar?.let { uri ->
-            val registroHoje = viewModel.registros.value.find { it.data == hoje }
-            if (registroHoje != null) {
-                exportarParaExcel(context, uri, registroHoje)
-                uriParaExportar = null // limpa o estado após exportar
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         registros.filter { it.data == hoje }.forEach {
             it.entrada?.let { entrada -> Text("Entrada: $entrada") }

@@ -18,15 +18,16 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.time.Month
 import java.util.*
+
+
 
 
 @Composable
 fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modifier = Modifier) {
     val registros by viewModel.registros.collectAsState()
-    val meses = java.time.Month.entries.map {
-        it.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
-    }
+    val meses = Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) }
 
     var tipoResumo by remember { mutableStateOf("Mensal") }
     var mesSelecionado by remember { mutableIntStateOf(LocalDate.now().monthValue - 1) }
@@ -38,7 +39,7 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
         try {
             val data = LocalDate.parse(it.data, formatterData)
             if (tipoResumo == "Semanal") {
-                data.isAfter(LocalDate.now().minusWeeks(1))
+                data.isAfter(LocalDate.now().minusDays(7))
             } else {
                 data.monthValue == mesSelecionado + 1
             }
@@ -47,16 +48,12 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
         }
     }
 
-    val totalHoras = registrosFiltrados.mapNotNull { registro ->
+    val totalHoras = registrosFiltrados.mapNotNull {
         try {
-            val entrada = registro.entrada?.let { LocalTime.parse(it, formatterHora) }
-            val saida = registro.saida?.let { LocalTime.parse(it, formatterHora) }
-            if (entrada != null && saida != null) {
-                Duration.between(entrada, saida)
-            } else null
-        } catch (e: Exception) {
-            null
-        }
+            val entrada = it.entrada?.let { LocalTime.parse(it, formatterHora) }
+            val saida = it.saida?.let { LocalTime.parse(it, formatterHora) }
+            if (entrada != null && saida != null) Duration.between(entrada, saida) else null
+        } catch (_: Exception) { null }
     }.fold(Duration.ZERO) { acc, dur -> acc.plus(dur) }
 
     val horasTotais = totalHoras.toHours()
@@ -64,47 +61,38 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
 
     Column(modifier = modifier.padding(16.dp)) {
         Text("Resumo de Registros", style = MaterialTheme.typography.headlineSmall)
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Tipo: ")
             Spacer(modifier = Modifier.width(8.dp))
-            DropdownMenuSelector(
-                options = listOf("Semanal", "Mensal"),
-                selectedOption = tipoResumo,
-                onOptionSelected = { tipoResumo = it }
-            )
+            DropdownMenuSelector(listOf("Semanal", "Mensal"), tipoResumo) { tipoResumo = it }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Mês: ")
-            Spacer(modifier = Modifier.width(8.dp))
-            DropdownMenuSelector(
-                options = meses,
-                selectedOption = meses[mesSelecionado],
-                onOptionSelected = { mesSelecionado = meses.indexOf(it) }
-            )
+        if (tipoResumo == "Mensal") {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Mês: ")
+                Spacer(modifier = Modifier.width(8.dp))
+                DropdownMenuSelector(meses, meses[mesSelecionado]) {
+                    mesSelecionado = meses.indexOf(it)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
         Text("Total trabalhado: ${horasTotais}h ${minutosTotais}min", style = MaterialTheme.typography.bodyLarge)
-
         Spacer(modifier = Modifier.height(16.dp))
 
         if (registrosFiltrados.isEmpty()) {
             Text("Nenhum registro encontrado para o período selecionado.")
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxHeight()) {
                 items(registrosFiltrados) { registro ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Column(Modifier.padding(8.dp)) {
@@ -120,6 +108,7 @@ fun ResumoScreen(viewModel: RegistroPontoViewModel = viewModel(), modifier: Modi
         }
     }
 }
+
 
 
 @Composable

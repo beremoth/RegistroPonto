@@ -1,123 +1,109 @@
 package com.example.registroponto.util
 
 import RegistroPonto
+import RegistroPontoDao
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import org.apache.poi.ss.usermodel.Cell
-import org.apache.poi.ss.usermodel.CellType
-import org.apache.poi.ss.usermodel.DateUtil
-import org.apache.poi.ss.usermodel.Sheet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
-fun getFileFromUri(context: Context, uri: Uri): File? {
-    val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-    val file = File(context.cacheDir, "registro_ponto_importado.xlsx")
-    FileOutputStream(file).use { output -> inputStream.copyTo(output) }
-    return file
-}
+fun exportarParaExcel(context: Context, file: File, registros: List<RegistroPonto>) {
+    try {
+        val workbook = if (file.exists()) {
+            XSSFWorkbook(file.inputStream())
+        } else {
+            XSSFWorkbook()
+        }
 
-fun getCellStringValue(cell: Cell?): String? {
-    if (cell == null) return null
-    return when (cell.cellType) {
-        CellType.STRING -> cell.stringCellValue
-        CellType.NUMERIC -> {
-            if (DateUtil.isCellDateFormatted(cell)) {
-                val calendar = Calendar.getInstance().apply { time = cell.dateCellValue }
-                return if (calendar.get(Calendar.HOUR_OF_DAY) == 0 &&
-                    calendar.get(Calendar.MINUTE) == 0 &&
-                    calendar.get(Calendar.SECOND) == 0
-                ) {
-                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(cell.dateCellValue)
-                } else {
-                    SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(cell.dateCellValue)
-                }
-            } else {
-                cell.numericCellValue.toString()
+        val sheet = workbook.getSheet("Registros") ?: workbook.createSheet("Registros")
+
+        // Cria cabeçalho se estiver vazio
+        if (sheet.physicalNumberOfRows == 0) {
+            val header = sheet.createRow(0)
+            header.createCell(0).setCellValue("Data")
+            header.createCell(1).setCellValue("Entrada")
+            header.createCell(2).setCellValue("Pausa")
+            header.createCell(3).setCellValue("Retorno")
+            header.createCell(4).setCellValue("Saída")
+        }
+
+        // Coleta as datas já existentes no arquivo para evitar duplicatas
+        val datasExistentes = mutableSetOf<String>()
+        for (i in 1..sheet.lastRowNum) {
+            val dataCell = sheet.getRow(i)?.getCell(0)
+            val dataStr = dataCell?.stringCellValue
+            if (!dataStr.isNullOrBlank()) {
+                datasExistentes.add(dataStr)
             }
         }
-        CellType.BOOLEAN -> cell.booleanCellValue.toString()
-        CellType.FORMULA -> cell.toString()
-        else -> null
-    }
-}
 
-fun importarRegistrosDoExcel(context: Context, uri: Uri): List<RegistroPonto> {
-    val registros = mutableListOf<RegistroPonto>()
-
-    try {
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            val workbook = XSSFWorkbook(inputStream)
-            val sheet = workbook.getSheetAt(0)
-
-            for (rowIndex in 1..sheet.lastRowNum) {
-                val row = sheet.getRow(rowIndex) ?: continue
-                val data = getCellStringValue(row.getCell(0)) ?: continue
-
-                val entrada = getCellStringValue(row.getCell(1))
-                val pausa = getCellStringValue(row.getCell(2))
-                val retorno = getCellStringValue(row.getCell(3))
-                val saida = getCellStringValue(row.getCell(4))
-
-                registros.add(
-                    RegistroPonto(
-                        data = data,
-                        entrada = entrada,
-                        pausa = pausa,
-                        retorno = retorno,
-                        saida = saida
-                    )
-                )
+        // Adiciona novos registros
+        var rowIndex = sheet.lastRowNum + 1
+        registros.forEach { registro ->
+            if (registro.data !in datasExistentes) {
+                val row = sheet.createRow(rowIndex++)
+                row.createCell(0).setCellValue(registro.data)
+                row.createCell(1).setCellValue(registro.entrada ?: "")
+                row.createCell(2).setCellValue(registro.pausa ?: "")
+                row.createCell(3).setCellValue(registro.retorno ?: "")
+                row.createCell(4).setCellValue(registro.saida ?: "")
             }
-
-            workbook.close()
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
 
-    return registros
-}
-
-fun exportarParaExcel(context: Context, uri: Uri, registro: RegistroPonto) {
-    try {
-        val headers = listOf("Data", "Entrada", "Pausa", "Retorno", "Saída")
-        val contentResolver = context.contentResolver
-        val workbook = contentResolver.openInputStream(uri)?.use { XSSFWorkbook(it) } ?: XSSFWorkbook()
-        val sheet = workbook.getOrCreateSheet("Registro de Ponto", headers)
-
-        val novaLinha = sheet.createRow(sheet.physicalNumberOfRows)
-        novaLinha.createCell(0).setCellValue(registro.data)
-        novaLinha.createCell(1).setCellValue(registro.entrada ?: "")
-        novaLinha.createCell(2).setCellValue(registro.pausa ?: "")
-        novaLinha.createCell(3).setCellValue(registro.retorno ?: "")
-        novaLinha.createCell(4).setCellValue(registro.saida ?: "")
-
-        contentResolver.openOutputStream(uri, "rwt")?.use { output -> workbook.write(output) }
+        file.outputStream().use { workbook.write(it) }
         workbook.close()
+        Toast.makeText(context, "Exportação concluída com sucesso!", Toast.LENGTH_SHORT).show()
 
-        Toast.makeText(context, "Registro adicionado com sucesso!", Toast.LENGTH_LONG).show()
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Erro ao exportar: ${e.message}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Erro ao exportar para Excel", Toast.LENGTH_LONG).show()
     }
 }
 
-fun XSSFWorkbook.getOrCreateSheet(sheetName: String, headers: List<String>): Sheet {
-    var sheet = getSheet(sheetName)
-    if (sheet == null) {
-        sheet = createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        headers.forEachIndexed { index, header ->
-            headerRow.createCell(index).setCellValue(header)
+
+
+suspend fun importarRegistrosDoExcel(context: Context, uri: Uri, dao: RegistroPontoDao) {
+    withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                val workbook = XSSFWorkbook(input)
+                val sheet = workbook.getSheetAt(0)
+
+                for (rowIndex in 1..sheet.lastRowNum) {
+                    val row = sheet.getRow(rowIndex)
+                    if (row != null) {
+                        val data = row.getCell(0)?.stringCellValue ?: continue
+                        val entrada = row.getCell(1)?.stringCellValue
+                        val pausa = row.getCell(2)?.stringCellValue
+                        val retorno = row.getCell(3)?.stringCellValue
+                        val saida = row.getCell(4)?.stringCellValue
+
+                        val registro = RegistroPonto(
+                            data = data,
+                            entrada = entrada,
+                            pausa = pausa,
+                            retorno = retorno,
+                            saida = saida
+                        )
+
+                        dao.inserir(registro)
+                    }
+                }
+
+                workbook.close()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Importação concluída com sucesso!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Erro ao importar do Excel", Toast.LENGTH_LONG).show()
+            }
         }
-        sheet.createFreezePane(0, 1)
     }
-    headers.indices.forEach { sheet.autoSizeColumn(it) }
-    return sheet
 }
+
