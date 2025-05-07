@@ -4,8 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
-
-
+    id ("dagger.hilt.android.plugin")
 }
 
 
@@ -78,6 +77,6 @@ dependencies {
     implementation(libs.poi.ooxml)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material)
-
+    implementation(libs.kotlinx.metadata.jvm)
 
 }
