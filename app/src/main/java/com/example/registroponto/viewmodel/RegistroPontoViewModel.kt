@@ -1,25 +1,22 @@
 package com.example.registroponto.viewmodel
 
 
+import AppDatabase
 import RegistroPonto
-import RegistroPontoDao
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.registroponto.util.importarRegistrosDoExcel
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class RegistroPontoViewModel @Inject constructor(
-    private val dao: RegistroPontoDao
-) : ViewModel() {
+class RegistroPontoViewModel(application: Application) : AndroidViewModel(application) {
+    private val dao = AppDatabase.getDatabase(application).registroPontoDao()
 
     private val _registros = MutableStateFlow<List<RegistroPonto>>(emptyList())
     val registros: StateFlow<List<RegistroPonto>> = _registros
@@ -38,30 +35,27 @@ class RegistroPontoViewModel @Inject constructor(
         viewModelScope.launch {
             val registrosDia = dao.listarTodos().find { it.data == data }
             if (registrosDia == null) {
-                dao.inserir(
-                    RegistroPonto(
-                        data = data,
-                        entrada = if (tipo == "entrada") hora else null,
-                        pausa = if (tipo == "pausa") hora else null,
-                        retorno = if (tipo == "retorno") hora else null,
-                        saida = if (tipo == "saida") hora else null
-                    )
+                val novo = RegistroPonto(
+                    data = data,
+                    entrada = if (tipo == "entrada") hora else null,
+                    pausa   = if (tipo == "pausa") hora else null,
+                    retorno = if (tipo == "retorno") hora else null,
+                    saida   = if (tipo == "saida") hora else null
                 )
+                dao.inserir(novo)
             } else {
-                dao.atualizar(
-                    registrosDia.copy(
-                        entrada = if (tipo == "entrada") hora else registrosDia.entrada,
-                        pausa = if (tipo == "pausa") hora else registrosDia.pausa,
-                        retorno = if (tipo == "retorno") hora else registrosDia.retorno,
-                        saida = if (tipo == "saida") hora else registrosDia.saida
-                    )
+                val atualizado = registrosDia.copy(
+                    entrada = if (tipo == "entrada") hora else registrosDia.entrada,
+                    pausa   = if (tipo == "pausa") hora else registrosDia.pausa,
+                    retorno = if (tipo == "retorno") hora else registrosDia.retorno,
+                    saida   = if (tipo == "saida") hora else registrosDia.saida
                 )
+                dao.atualizar(atualizado)
             }
             carregarRegistros()
             onComplete?.invoke()
         }
     }
-
     fun inserirRegistro(registro: RegistroPonto) {
         viewModelScope.launch {
             dao.inserir(registro)

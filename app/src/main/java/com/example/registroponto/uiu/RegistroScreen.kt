@@ -18,19 +18,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.registroponto.util.exportarParaExcel
-import com.example.registroponto.util.importarRegistrosDoExcel
 import com.example.registroponto.viewmodel.RegistroPontoViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = hiltViewModel(), modifier: Modifier = Modifier) {
+fun RegistroPontoScreen(viewModel: RegistroPontoViewModel = koinViewModel(), modifier: Modifier = Modifier) {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     val hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     val registros by viewModel.registros.collectAsState()

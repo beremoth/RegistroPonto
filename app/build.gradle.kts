@@ -2,9 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.dagger.hilt.android")
     kotlin("kapt")
-    id ("dagger.hilt.android.plugin")
 }
 
 
@@ -45,38 +43,29 @@ android {
 
 dependencies {
 
+        implementation(libs.androidx.core.ktx)
+        implementation(libs.androidx.lifecycle.runtime.ktx)
+        implementation(libs.androidx.activity.compose)
+        implementation(platform(libs.androidx.compose.bom))
+        implementation(libs.androidx.ui)
+        implementation(libs.androidx.ui.graphics)
+        implementation(libs.androidx.ui.tooling.preview)
+        implementation(libs.androidx.material3)
+        implementation(libs.androidx.navigation.compose)
 
-    implementation (libs.hilt.android.v250)
-    implementation(libs.androidx.media3.common.ktx)
-    kapt (libs.hilt.android.compiler)
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.room.common.jvm)
-    implementation(libs.androidx.room.runtime.android)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.core.i18n)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    kapt("androidx.room:room-compiler:2.7.1")
-    implementation(libs.poi.ooxml)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.material)
-    implementation(libs.kotlinx.metadata.jvm)
+        implementation(libs.androidx.room.runtime)
+        implementation(libs.androidx.room.ktx)
+        kapt("androidx.room:room-compiler:2.7.1")
+
+        implementation(libs.poi.ooxml)
+        implementation(libs.androidx.material.icons.extended)
+        implementation(libs.androidx.material)
+
+        // Koin core
+        implementation(libs.koin.android)
+        // Koin para ViewModel Compose
+        implementation(libs.koin.androidx.compose)
+        // Koin para AndroidX ViewModel
+        implementation(libs.koin.androidx.viewmodel)
 
 }
