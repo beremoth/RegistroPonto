@@ -3,11 +3,32 @@ package com.example.registroponto.util
 import RegistroPonto
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+
+fun Cell.getStringValue(): String? {
+    return when (cellType) {
+        CellType.STRING -> stringCellValue
+        CellType.NUMERIC -> if (DateUtil.isCellDateFormatted(this)) {
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(dateCellValue)
+        } else {
+            numericCellValue.toInt().toString()
+        }
+        CellType.BLANK -> null
+        else -> null
+    }
+}
+
 
 fun exportarParaExcel(context: Context, file: File, registros: List<RegistroPonto>) {
     try {
@@ -78,11 +99,11 @@ suspend fun importarRegistrosDoExcel(
                 for (rowIndex in 1..sheet.lastRowNum) {
                     val row = sheet.getRow(rowIndex)
                     if (row != null) {
-                        val data = row.getCell(0)?.stringCellValue ?: continue
-                        val entrada = row.getCell(1)?.stringCellValue
-                        val pausa = row.getCell(2)?.stringCellValue
-                        val retorno = row.getCell(3)?.stringCellValue
-                        val saida = row.getCell(4)?.stringCellValue
+                        val data = row.getCell(0)?.getStringValue() ?: continue
+                        val entrada = row.getCell(1)?.getStringValue()
+                        val pausa = row.getCell(2)?.getStringValue()
+                        val retorno = row.getCell(3)?.getStringValue()
+                        val saida = row.getCell(4)?.getStringValue()
 
                         val registro = RegistroPonto(
                             data = data,
@@ -97,17 +118,14 @@ suspend fun importarRegistrosDoExcel(
                 }
 
                 workbook.close()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Importação concluída com sucesso!", Toast.LENGTH_SHORT).show()
-                }
+
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Erro ao importar do Excel", Toast.LENGTH_LONG).show()
-            }
+            Log.e("ExcelUtils", "Erro ao importar Excel", e)
+            throw e // Deixa o ViewModel lidar com o erro
         }
     }
 }
+
 
 

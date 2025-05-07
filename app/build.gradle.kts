@@ -65,7 +65,6 @@ dependencies {
         implementation(libs.koin.android)
         // Koin para ViewModel Compose
         implementation(libs.koin.androidx.compose)
-        // Koin para AndroidX ViewModel
-        implementation(libs.koin.androidx.viewmodel)
+
 
 }

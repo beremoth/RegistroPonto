@@ -56,25 +56,19 @@ class RegistroPontoViewModel(application: Application) : AndroidViewModel(applic
             onComplete?.invoke()
         }
     }
-    fun inserirRegistro(registro: RegistroPonto) {
-        viewModelScope.launch {
-            dao.inserir(registro)
-            carregarRegistros()
-        }
-    }
+
     fun importarDoExcel(uri: Uri, context: Context) {
         viewModelScope.launch {
             try {
                 importarRegistrosDoExcel(context, uri) { registro ->
-                    dao.inserir(registro) // aqui estamos passando uma lambda suspensa compatível
+                    dao.inserir(registro)
                 }
                 carregarRegistros()
-                Toast.makeText(context, "Importação concluída com sucesso!", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(context, "Importação concluída com sucesso!", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Log.e("RegistroPontoViewModel", "Erro ao importar Excel", e)
                 Toast.makeText(context, "Erro ao importar: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
+
 }
