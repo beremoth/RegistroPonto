@@ -15,6 +15,18 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+fun Cell?.getHoraFormatada(): String? {
+    if (this == null) return null
+
+    return when {
+        cellType == CellType.STRING -> stringCellValue
+        cellType == CellType.NUMERIC && DateUtil.isCellDateFormatted(this) -> {
+            val date = dateCellValue
+            SimpleDateFormat("HH:mm").format(date)  // retorna só a hora
+        }
+        else -> null
+    }
+}
 
 fun Cell.getStringValue(): String? {
     return when (cellType) {
@@ -100,10 +112,11 @@ suspend fun importarRegistrosDoExcel(
                     val row = sheet.getRow(rowIndex)
                     if (row != null) {
                         val data = row.getCell(0)?.getStringValue() ?: continue
-                        val entrada = row.getCell(1)?.getStringValue()
-                        val pausa = row.getCell(2)?.getStringValue()
-                        val retorno = row.getCell(3)?.getStringValue()
-                        val saida = row.getCell(4)?.getStringValue()
+                        val entrada = row.getCell(1).getHoraFormatada()
+                        val pausa = row.getCell(2).getHoraFormatada()
+                        val retorno = row.getCell(3).getHoraFormatada()
+                        val saida = row.getCell(4).getHoraFormatada()
+
 
                         val registro = RegistroPonto(
                             data = data,
